@@ -1,0 +1,9 @@
+bin-debug/
+bin-release/
+.settings/
+.next/
+node_modules/
+*.swf
+*.air
+*.ipa
+*.apk
