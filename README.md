@@ -1,7 +1,8 @@
 
 NFT market for my pictures
 
-Doc: (TBC)
+Doc: 
+https://recruit.gmo.jp/engineer/jisedai/blog/comparation-with-nft_marketplace-opensea-adam-customized_one/
 
 Usage:
 - yarn
