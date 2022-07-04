@@ -8,6 +8,7 @@ import Fortmatic from "fortmatic";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import market from '../config/PICNFTMarket.json';
 import nft from '../config/PICNFT.json';
+import Link from 'next/link'
 //Note: just for test in rinkeby testnet.
 const NETWORK_ID = 4;
 
@@ -67,6 +68,7 @@ export default function Home() {
         options: {
           //Your infura id
           infuraId: "4306119bc7cb4aee9876021ba3da4bd7" // required
+          //infuraId: "7c9370b2112b43ac9c5261e18ad337aa" // required
         }
       }
     };
@@ -79,6 +81,12 @@ export default function Home() {
     });
     const connection = await web3Modal.connect()
     const provider = new ethers.providers.Web3Provider(connection)
+    const chainid = await provider.getNetwork()
+    console.log(`chainid is ${chainid.chainId}`)
+    if(chainid.chainId != 4){
+      window.alert('Please change to Rinkeby network.')
+      return
+    }
     
     const marketContract = new ethers.Contract(nftmarketaddress, nftmarketabi, provider)
 
@@ -89,6 +97,8 @@ export default function Home() {
 
     // get all selling items
     const data = await marketContract.fetchAllNftsLockedInMarket()
+    console.log(data)
+    
 
     const items = await Promise.all(data.map(async i => {
       const tokenContract = new ethers.Contract(i.nftContract, nftabi, provider)
@@ -126,6 +136,10 @@ export default function Home() {
       if(image.indexOf('ipfs://') == 0){
         image = image.replace('ipfs://','https://ipfs.io/ipfs/')
       }
+
+      const prohibitednft = await marketContract.blacklist(i.nftContract, 0)
+      const prohibitedtokenid = await marketContract.blacklist(i.nftContract, i.tokenId)
+
       let item = {
         salekind,
         price,
@@ -141,13 +155,15 @@ export default function Home() {
         description: meta.data.description,
         itemId: i.itemId,
         binvalid,
-        bid
+        bid,
+        prohibited: prohibitednft || prohibitedtokenid
       }
       return item
     }))
 
 
     //console.log('items: ', items)
+    items.reverse()
     setNfts(items)
     setLoaded('loaded')
   }
@@ -270,6 +286,7 @@ export default function Home() {
           {
             nfts.map((nft, i) => (
               <div key={i} className="border p-4 shadow">
+                {nft.prohibited && <p className="text-1xl my-1 font-bold text-red-800">🈲 Prohibited 🈲</p>}
                 <img src={nft.image} className="rounded" />
                 {
                   nft.salekind == '0' ?
@@ -284,7 +301,12 @@ export default function Home() {
                       <p className="text-1xl my-1 font-bold text-red-400">オークション販売(期間終了)</p>
                     )
                 }
-                <p className="text-1xl my-1 font-bold">NFT Contract: {nft.nftContract.substr(0,6)+ '...'}</p>
+                <p className="text-1xl my-1 font-bold">NFT Contract: </p>
+                <Link href= {"https://rinkeby.etherscan.io/address/" + nft.nftContract}>
+                  <a className="mr-4 text-blue-500 font-bold">
+                    {nft.nftContract}
+                  </a>
+                </Link>
                 <p className="text-1xl my-1 font-bold">NFT Token Id: {nft.tokenId.toString().length > 6 ? nft.tokenId.toString().substr(0,6)+ '...' : nft.tokenId.toString()}</p>
                 <p className="text-1xl my-1 font-bold">Name: {nft.name}</p>
                 <p className="text-1xl my-1 font-bold">Description: {nft.description}</p>
@@ -308,7 +330,7 @@ export default function Home() {
                    (nft.salekind != '1' || (nft.salekind == '1' && nft.bid?.value.toString()) == '0') &&
                   <div className="border p-4">
                     {
-                      <button className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => withdrawNft(nft)}>Withdraw NFT</button>
+                      <button disabled={nft.prohibited} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => withdrawNft(nft)}>Withdraw NFT</button>
                     }
                   </div>
                 }
@@ -340,14 +362,14 @@ export default function Home() {
                       className="mt-2 border rounded p-4"
                       onChange={e => updateFormInput({ ...formInput, duration: e.target.value })}
                     />
-                    <button className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => resellNft(nft)}>Resell the NFT</button>
+                    <button disabled={nft.prohibited} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => resellNft(nft)}>Resell the NFT</button>
                   </div>
                 }
                 {
                   (nft.salekind == '0' && !nft.binvalid && curAcount != nft.seller) &&
                   <div>
                     {
-                        <button disabled={nft.binvalid} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'0')}>Buy NFT</button>
+                        <button disabled={nft.binvalid || nft.prohibited} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'0')}>Buy NFT</button>
                     }
                   </div>
                 }
@@ -360,16 +382,16 @@ export default function Home() {
                       className="text-2xl border rounded p-1"
                       onChange={e => updateFormInput({ ...formInput, bidPrice: e.target.value })}
                     />
-                    <button disabled={nft.binvalid} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'1')}>Bid</button>
+                    <button disabled={nft.binvalid || nft.prohibited} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'1')}>Bid</button>
                   </div>
                 }
                 {
                   (nft.salekind == '1' && nft.binvalid && nft.bid?.value.toString() != '0' && curAcount.toLocaleLowerCase() == nft.bid?.bidder.toLocaleLowerCase()) &&
-                    <button className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'1')}>You are success bidder,get it</button>
+                    <button disabled={nft.prohibited} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'1')}>You are success bidder,get it</button>
                 }
                 {
                   (nft.salekind == '1' && nft.binvalid && nft.bid?.value.toString() != '0' && curAcount.toLocaleLowerCase() != nft.bid?.bidder.toLocaleLowerCase()) &&
-                    <button className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'1')}>Send the NFT to success bidder</button>
+                    <button disabled={nft.prohibited} className="bg-green-600 text-white py-2 px-12 rounded" onClick={() => buyNft(nft,'1')}>Send the NFT to success bidder</button>
                 }
                 {
                   tx && tx[0]==nft.itemId.toString() && (<p className="font-bold text-yellow-400 ">🌈 Sending '{tx[1]}' Transaction to Ethereum ... 🌕 🌕 🌓 🌑 🌑 </p>)

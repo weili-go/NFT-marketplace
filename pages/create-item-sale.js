@@ -31,6 +31,12 @@ export default function Home() {
     });
     const connection = await web3Modal.connect()
     const provider = new ethers.providers.Web3Provider(connection)    
+    const chainid = await provider.getNetwork()
+    console.log(`chainid is ${chainid.chainId}`)
+    if(chainid.chainId != 4){
+      window.alert('Please change to Rinkeby network.')
+      return
+    }
     const signer = provider.getSigner()
     
     let nftcontract = new ethers.Contract(nftaddress,nftabi, signer)

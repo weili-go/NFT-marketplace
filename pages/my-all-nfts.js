@@ -42,6 +42,12 @@ export default function Home() {
     });
     const connection = await web3Modal.connect()
     const provider = new ethers.providers.Web3Provider(connection)    
+    const chainid = await provider.getNetwork()
+    console.log(`chainid is ${chainid.chainId}`)
+    if(chainid.chainId != 4){
+      window.alert('Please change to Rinkeby network.')
+      return
+    }
     const signer = provider.getSigner()
     let nftcontract = new ethers.Contract(nft.token_address,nftabi, signer)
 
@@ -103,6 +109,12 @@ export default function Home() {
     });
     const connection = await web3Modal.connect()
     const provider = new ethers.providers.Web3Provider(connection)
+    const chainid = await provider.getNetwork()
+    console.log(`chainid is ${chainid.chainId}`)
+    if(chainid.chainId != 4){
+      window.alert('Please change to Rinkeby network.')
+      return
+    }
     const signer = provider.getSigner()
     const curAcounttmp = await signer.getAddress();
     setCurAcount(curAcounttmp)
@@ -118,9 +130,19 @@ export default function Home() {
     //console.log('=====>')
     //console.log(datat.data.assets)
     //console.log('<=====')
-    const data = datat.data.assets;
-    const items = await Promise.all(data.map(async i => {
+    // now only ERC721 is supported
+    const data = datat.data.assets.filter(
+      i => i.asset_contract.schema_name == 'ERC721'
+    );
 
+    // just for debug
+    const data2 = datat.data.assets.filter(
+      i => i.asset_contract.schema_name !== 'ERC721'
+    );
+    console.log('ERC1155 as below')
+    console.log(data2)
+
+    const items = await Promise.all(data.map(async i => {
       let item = {
         owner: curAcounttmp,
         image_url: i.image_url,

@@ -21,6 +21,12 @@ function MyApp({ Component, pageProps }) {
     });
     const connection = await web3Modal.connect()
     const provider = new ethers.providers.Web3Provider(connection)
+    const chainid = await provider.getNetwork()
+    console.log(`chainid is ${chainid.chainId}`)
+    if(chainid.chainId != 4){
+      window.alert('Please change to Rinkeby network.')
+      return
+    }
     const signer = provider.getSigner()
     const cur = await signer.getAddress();
     console.log(cur)
@@ -32,11 +38,29 @@ function MyApp({ Component, pageProps }) {
     router.push('/my-acount')
   }
 
+  // 
+  console.log(router.asPath);
+  let message = '';
+  switch (router.asPath) {
+    case '/':
+      message = '🔔 PIC NFTマーケットプレイスでの取引には手数料なし';
+      break;
+    case '/create-item-sale':
+      message = '🔔 NFTの初回上場費用のみ徴収する';
+      break;
+    case '/proposes':
+      message = '🔔 一緒にこのNFTマーケットプレイスをもっと素晴らしくなれるように';
+      break;
+    default:
+      break;
+  }
+
   return (
     <div>
       <nav className="border-b px-12 py-6">
       <p className="text-xl text-pink-600">🌸🌸 PIC 🌸🌸</p>
         <p className="text-xl text-pink-600">   Pictures NFT Marketplace </p>
+        <p className="text-xl text-green-600"> {message} </p>
         <div className="flex mt-4">
           <Link href="/">
             <a className="mr-4 text-blue-500 font-bold">
@@ -61,6 +85,29 @@ function MyApp({ Component, pageProps }) {
           <Link href="/my-all-nfts">
             <a className="mr-4 text-blue-500 font-bold">
               My NFTSs（保有のNFT）
+            </a>
+          </Link>
+          <a className="mr-4 text-yellow-500 font-bold">
+              |
+          </a>
+          <Link href="/dao-rules">
+            <a className="mr-4 text-red-500 font-bold">
+              DAO Rules
+            </a>
+          </Link>
+          <Link href="/dao-tokens">
+            <a className="mr-4 text-red-500 font-bold">
+              DAO Token
+            </a>
+          </Link>
+          <Link href="/proposes">
+            <a className="mr-4 text-red-500 font-bold">
+               Proposal List(提案一覧)
+            </a>
+          </Link>
+          <Link href="/create-propose-flex">
+            <a className="mr-4 text-red-500 font-bold">
+              Propose(提案する)
             </a>
           </Link>
           <div onClick={() => handleClick()}>
