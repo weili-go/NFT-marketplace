@@ -2,6 +2,10 @@
 NFT market for my pictures
 
 Doc: 
+NFT Marketplace with DAO
+https://recruit.gmo.jp/engineer/jisedai/blog/dao/
+
+NFT Marketplace
 https://recruit.gmo.jp/engineer/jisedai/blog/comparation-with-nft_marketplace-opensea-adam-customized_one/
 
 Usage:
