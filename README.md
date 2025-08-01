@@ -17,3 +17,5 @@ NOTE:
 - ERC1155 NFT not supported yet.
 - No audit to smart contract.Please use buy yourself resposibility.
 - Front-end code is not optimized due to development schedule.
+
+- test
